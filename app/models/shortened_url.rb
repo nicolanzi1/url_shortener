@@ -18,6 +18,21 @@ class ShortenedUrl < ApplicationRecord
     validates :long_url, :short_url, :submitter, presence: true
     validates :short_url, uniqueness: true
     
+    belongs_to :submitter,
+        primary_key: :id,
+        class_name: :User,
+        foreign_key: :submitter_id
+    
+    has_many :visits,
+        primary_key: :id,
+        class_name: :Visit,
+        foreign_key: :shortened_url_id
+
+    has_many :visitors,
+        -> { distinct } # ->(lambda literal) = Proc.new
+        through: :visits,
+        source: :visitor
+
     def self.create_for_user_and_long_url!(user, long_url)
         ShortenedUrl.create!(
             submitter_id: user.id,
@@ -33,8 +48,19 @@ class ShortenedUrl < ApplicationRecord
         end
     end
 
-    belongs_to :submitter,
-        primary_key: :id,
-        class_name: :User,
-        foreign_key: :submitter_id
+    def num_clicks
+        visits.count
+    end
+
+    def num_uniques
+        visits.select('user_id').distinct.count
+    end
+
+    def num_recent_uniques
+        visits
+            .select('user_id')
+            .where('created_at > ?', 10.minutes.ago)
+            .distinct
+            .count
+    end
 end
