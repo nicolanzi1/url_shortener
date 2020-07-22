@@ -29,7 +29,7 @@ class ShortenedUrl < ApplicationRecord
         foreign_key: :shortened_url_id
 
     has_many :visitors,
-        -> { distinct } # ->(lambda literal) = Proc.new
+        -> { distinct }, # ->(lambda literal) = Proc.new
         through: :visits,
         source: :visitor
 
